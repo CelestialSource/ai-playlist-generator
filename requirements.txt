@@ -4,3 +4,4 @@ spotipy
 google
 google.generativeai
 messagebox
+tidalapi
