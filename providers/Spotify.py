@@ -2,9 +2,22 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import os
 
+# Library Used: https://spotipy.readthedocs.io/en/2.25.1/
+
 class SpotifyClient:
+    '''
+    GeminiClient (clientId, clientSecret, spotifyUsername (eg. 31vuaqgukgtreawaemkpaxjh5miy :: https://open.spotify.com/user/[31vuaqgukgtreawaemkpaxjh5miy]))
+      running gemini-2.0-flash
+     ∷ authenticate
+     ∷ getPlaylists -> <class> 
+     ∷ _getPlaylistSongs (playlistId) -> list
+     ∷ _getSongURI (song_name, artist_name) -> uri or None
+     ∷ _createPlaylist
+     ∷ _addTracks
+     ∷ _unfollowPlaylist
+    '''
     oauthScope = 'playlist-modify-private playlist-read-private playlist-read-collaborative'
-    addRatelimit = 100
+    batchCount = 100
 
     def __init__(self, clientId, clientSecret, username, redirect='http://127.0.0.1:8888/callback'):
         self.clientId = clientId
@@ -60,12 +73,9 @@ class SpotifyClient:
 
     def _addTracks(self, playlistId, songURIList):
         if songURIList:
-            for i in range(0, len(songURIList), self.addRatelimit):
-                batch = songURIList[i:i + self.addRatelimit]
+            for i in range(0, len(songURIList), self.batchCount):
+                batch = songURIList[i:i + self.batchCount]
                 self.spHandle.playlist_add_items(playlistId, batch)
 
     def _unfollowPlaylist(self, userId, playlistId):
         self.spHandle.user_playlist_unfollow(user=userId, playlist_id=playlistId)
-    
-    def setUpdater(self, updater):
-        self.statusUpdater = updater

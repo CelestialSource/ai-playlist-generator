@@ -10,10 +10,12 @@ class AppState:
     '''A simple class to hold all application variables.'''
     def __init__(self, appWidgets):
         # API and User Credentials
-        self.geminiKey = ctk.StringVar(value='AIzaSyAr6I3EOto5kBbrTfMHY785_dbbPN9noNw')
+        # appWidgets is passed for cross-thread functionality (Threading.Thread())
+        # The following keys (geminiKey, clientSecret) should never be readable these values are temporary and not for prod
+        self.geminiKey = ctk.StringVar(value='AIzaSyBhR-n9lF353FXJZBtGtQhAOwOa-_0H9aQ')
         self.clientId = ctk.StringVar(value='69287e1a7be34994a28dfb2893cf8deb')
         self.clientSecret = ctk.StringVar(value='0b3db5dd4256485d92a95eba3420a8cc')
-        self.spotifyUsername = ctk.StringVar(value='qd0ti1s5o48ufhmeg6uqz6030')
+        self.spotifyUsername = ctk.StringVar(value='31vuaqgukgtreawaemkpaxjh5miy')
 
         # User Input and App Logic
         self.promptText = ctk.StringVar(value='chill 2010s songs')
@@ -33,8 +35,8 @@ class AppState:
         self.appWidgets = appWidgets
 
 
-if __name__ == '__main__':
-    gui_app = Gui(title='AI Music Playlist Generator')
+if __name__ == '__main__':#
+    guiApp = Gui(title='AI Music Playlist Generator')
     # All widgets will be stored in the 'appWidgets' dictionary
     appWidgets = {}
     # All variables are now encapsulated in the 'appState' instance
@@ -43,6 +45,20 @@ if __name__ == '__main__':
     def setupGUI(gui, appState, appWidgets):
         windowFrame = gui.windowFrame
         appWidgets['root'] = gui.window
+        # appWidgets structure:
+        '''
+            appWidgets: {
+                root: gui.window (ctk.CTk)
+                importButton: (ctk.CTkButton)
+                seedDropdown: (ctk.CTkCombobox)
+                previewButton: (ctk.CTkButton)
+                createPlaylistButton: (ctk.CTkButton)
+                deletePlaylistButton: (ctk.CTkButton)
+                previewList: (ctk.CTkLabel)
+                statusLabel: (ctk.CTkLabel)
+            }
+            utilizes Threading
+        '''
         
         windowFrame.grid_columnconfigure(1, weight=1)
 
@@ -59,9 +75,11 @@ if __name__ == '__main__':
 
         def onPlaylistSliderChange(value):
             appState.playlistLengthCustom.set(str(int(round(float(value)))))
+        
+        lengthRange = [5, 50]
 
         playlistSlider = promptFrame.createSlider({
-            'min': 5, 'max': 30, 'steps': 25,
+            'min': lengthRange[0], 'max': lengthRange[1], 'steps': lengthRange[1] - lengthRange[0],
             'var': appState.playlistLength,
             'function': onPlaylistSliderChange,
             'default': appState.playlistLength.get()
@@ -71,10 +89,10 @@ if __name__ == '__main__':
             try:
                 newValueStr = appState.playlistLengthCustom.get()
                 if not newValueStr:
-                    appState.playlistLength.set(5)
-                    playlistSlider.set(5)
+                    appState.playlistLength.set(lengthRange[0])
+                    playlistSlider.set(lengthRange[0])
                     return
-                newValue = max(5, min(int(newValueStr), 30))
+                newValue = max(lengthRange[0], min(int(newValueStr), lengthRange[1]))
                 appState.playlistLength.set(newValue)
                 playlistSlider.set(newValue)
             except ValueError:
@@ -152,14 +170,33 @@ if __name__ == '__main__':
                     appWidgets['previewList'].delete(i)
     
     # --- Helper functions are now outside setupGUI ---
+    # _initializeApiClients
+    # previewSongs
+    # createActualPlaylist
+    # deleteGeneratedPlaylist
 
     def _initializeApiClients(appState):
+        '''
+            Calls:
+            ↳ musicClient → SpotifyClient
+            ↳ aiClient → GeminiClient
+        '''
         if not appState.musicClient:
             appState.musicClient = SpotifyClient(clientId=appState.clientId.get(), clientSecret=appState.clientSecret.get(), username=appState.spotifyUsername.get())
         if not appState.aiClient:
             appState.aiClient = GeminiClient(apiKey=appState.geminiKey.get())
 
     def loadPlaylists(appState, appWidgets):
+        '''
+            Calls:
+            ↳ _initializeApiClients
+            ↳ musicClient.authenticate
+            ↳ musicClient.getPlaylists
+                ↳ playlistsMap: dict
+                    ↳ playlist['name'] → playlist['id'] (uri)
+                ↳ playlistNames: list
+                    ↳ playlist['name]
+        '''
         try:
             _initializeApiClients(appState)
             appState.musicClient.authenticate()
@@ -183,6 +220,14 @@ if __name__ == '__main__':
                 appWidgets['root'].after(0, lambda: appWidgets['seedDropdown'].configure(state='readonly'))
 
     def previewSongs(appState, appWidgets):
+        '''
+            Calls:
+            ↳ _initializeApiClients
+            ↳ musicClient._getPlaylistSongs (playlistsMap[seedPlaylist.get()])
+            ↳ aiClient.generateSongs (promptText.get(), playlistLength.get(), seedSongs)
+                ↳ songName, artistName → suggest.song, suggest.artist
+                ↳ trackUri →  musicClient._getSongURI
+        '''
         _initializeApiClients(appState)
         seedSongs = appState.musicClient._getPlaylistSongs(appState.playlistsMap[appState.seedPlaylist.get()])
         songIdeas = appState.aiClient.generateSongs(
@@ -223,6 +268,15 @@ if __name__ == '__main__':
         appWidgets['root'].after(0, lambda: appWidgets['previewButton'].configure(state='normal'))
 
     def createActualPlaylist(appState, appWidgets):
+        '''
+            Calls:
+            ↳ _initializeApiClients
+            ↳ musicClient.spHandle.current_user()['id']
+            ↳ musicClient._createPlaylist
+            ↳ musicClient._addTracks
+            ↳ latestPlaylistId → playlistData['id']
+            ↳ latestPlaylistName →  musicplaylistData['name']
+        '''
         try:
             if not appState.previewedTracks: return
             _initializeApiClients(appState)
@@ -244,6 +298,12 @@ if __name__ == '__main__':
             appWidgets['root'].after(0, lambda: appWidgets['createPlaylistButton'].configure(state='disabled'))
 
     def deleteGeneratedPlaylist(appState, appWidgets):
+        '''
+            Calls:
+            ↳ _initializeApiClients
+            ↳ musicClient.spHandle.current_user()['id']
+            ↳ musicClient._unfollowPlaylist
+        '''
         try:
             _initializeApiClients(appState)
             userId = appState.musicClient.spHandle.current_user()['id']
@@ -259,5 +319,5 @@ if __name__ == '__main__':
 
 
     # Pass the application state and widgets objects to the setup function
-    setupGUI(gui_app, appState, appWidgets)
-    gui_app.window.mainloop()
+    setupGUI(guiApp, appState, appWidgets)
+    guiApp.window.mainloop()

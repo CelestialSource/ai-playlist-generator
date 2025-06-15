@@ -1,12 +1,16 @@
-import customtkinter as ctk
-import tkinter as tk
+import customtkinter as ctk # Library: https://customtkinter.tomschimansky.com/
+import tkinter as tk# Library: https://docs.python.org/3/library/tkinter.html
 from tkinter import ttk # Correct import for ttk widgets
 
 class Gui:
-    """
+    '''
     Gui wrapper for ctk
     Follows a Material You 3 Dark inspired theme
-    """
+    window -> ctk.Ctk
+    windowFrame -> ctk.CTkFrame
+    
+    USE THE FrameWrapper CLASS FOR ALL USAGE
+    '''
     
     _gridKeys = ['row', 'column', 'sticky', 'padx', 'pady', 'rowspan', 'columnspan']
     
@@ -139,6 +143,10 @@ class Gui:
                   troughcolor=[('active', treeview_bg_color)])
 
 class GridHandler:
+    '''
+    GridHandler
+    <Internal Function>
+    '''
     def __init__(self):
         self.rows = [0]
     
@@ -158,6 +166,19 @@ class GridHandler:
         return col
 
 class FrameWrapper:
+    '''
+    FrameWrapper
+      All functions have a "next" boolean to move down a row
+     ∷ createCustomTextbox
+        ↳ gui.createLabel
+        ↳ gui.createEntry
+     ∷ createLabel
+     ∷ createEntry
+     ∷ createSlider
+     ∷ createCombobox
+     ∷ createButton
+     ∷ createTreeview
+    '''
     def __init__(self, guiApi, baseFrame, frameId):
         self.gui = guiApi
         self.gridHandler = GridHandler()

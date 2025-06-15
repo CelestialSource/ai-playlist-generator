@@ -1,12 +1,23 @@
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import json
 
+# migrated to from google.generativeai to google-genai
+# https://github.com/googleapis/python-genai
+
 class GeminiClient:
+    '''
+    GeminiClient
+      running gemini-2.0-flash
+     ∷ _parse
+     ∷ generateSongs
+        ↳ model.generate_content
+        returns: _parse(content)
+    '''
     def __init__(self, apiKey):
         self.apiKey = apiKey
-        genai.configure(api_key=self.apiKey)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
-        self.statusUpdater = None
+        self.client = genai.Client(api_key=self.apiKey,http_options=types.HttpOptions(api_version='v1beta'))
+        self.model = 'gemini-2.0-flash'
 
     def _parse(self, text):
         cleaned = text.strip()
@@ -39,8 +50,7 @@ class GeminiClient:
         Provide the output as a valid JSON array of objects, where each object has a "song" key and an "artist" key.
         Example: [{{"song": "Bohemian Rhapsody", "artist": "Queen"}}, {{"song": "Stairway to Heaven", "artist": "Led Zeppelin"}}]
         """
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model=self.model, contents=prompt
+        )
         return self._parse(response.text)
-    
-    def setUpdater(self, updater):
-        self.statusUpdater = updater
