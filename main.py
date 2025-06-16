@@ -92,9 +92,10 @@ if __name__ == '__main__':#
                     appState.playlistLength.set(lengthRange[0])
                     playlistSlider.set(lengthRange[0])
                     return
-                newValue = max(lengthRange[0], min(int(newValueStr), lengthRange[1]))
-                appState.playlistLength.set(newValue)
-                playlistSlider.set(newValue)
+                sliderNewValue = max(lengthRange[0], min(int(newValueStr), lengthRange[1]))
+                customNewValue = max(lengthRange[0], int(newValueStr))
+                appState.playlistLength.set(customNewValue)
+                playlistSlider.set(sliderNewValue)
             except ValueError:
                 appState.playlistLengthCustom.set(str(appState.playlistLength.get()))
 
