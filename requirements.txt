@@ -1,5 +1,6 @@
 customtkinter
 ttkthemes
+tkinter
 spotipy
 google-genai
 messagebox

@@ -17,7 +17,7 @@ class GeminiClient:
     def __init__(self, apiKey):
         self.apiKey = apiKey
         self.client = genai.Client(api_key=self.apiKey,http_options=types.HttpOptions(api_version='v1beta'))
-        self.model = 'gemini-2.0-flash'
+        self.model = 'gemini-2.5-flash-preview-05-20'
 
     def _parse(self, text):
         cleaned = text.strip()

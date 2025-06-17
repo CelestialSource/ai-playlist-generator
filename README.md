@@ -30,4 +30,4 @@ Python: The core programming language.<br>
 Interals: threading, json, os<br>
 AI: google-genai<br>
 Music: spotipy<br>
-UI: customtkinter, tkinter, messagebox<br>
+UI: customtkinter, tkinter, messagebox, ttkthemes<br>
